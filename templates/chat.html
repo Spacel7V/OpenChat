@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groupe Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+
+<body>
+    <div id="vip-status">
+        <!-- Formulaire pour entrer le mot de passe VIP -->
+        <input type="password" id="password" placeholder="Entrez le mot de passe">
+        <button id="check-password">Vérifier le mot de passe</button>
+    </div>
+
+    <div id="admin-panel" style="display:none;">
+        <p><strong>Utilisateurs en ligne :</strong> <span id="user-count">0</span></p>
+        <!-- Le bouton VIP pour effacer les messages -->
+        <button id="clear-messages" style="display:none;">Effacer tous les messages</button>
+    </div>
+
+    <div class="chat-container">
+        <div id="messages"></div>
+        <div id="typing"></div>
+
+        <form id="chat-form">
+            <input id="username" type="text" placeholder="Entrez votre nom" required>
+            <input id="message" type="text" placeholder="Écrivez votre message" required>
+            <button type="submit">Envoyer</button>
+        </form>
+    </div>
+
+    <script>
+        var socket = io();
+        var typing = false;
+        var timeout = undefined;
+        var isVIP = false;
+
+        // Vérification du mot de passe VIP
+        document.getElementById('check-password').onclick = function () {
+            let password = document.getElementById('password').value;
+            socket.emit('check password', { password: password });
+        };
+
+        // Réception de la vérification du mot de passe
+        socket.on('password correct', function (data) {
+            isVIP = data.vip;
+            if (isVIP) {
+                document.getElementById('clear-messages').style.display = 'block'; // Afficher le bouton "Effacer"
+                document.getElementById('admin-panel').style.display = 'block'; // Afficher le panneau admin
+                alert('Mot de passe correct. Vous êtes maintenant VIP !');
+            }
+        });
+
+        socket.on('password incorrect', function (data) {
+            alert('Mot de passe incorrect.');
+        });
+
+        // Soumission du message
+        document.getElementById('chat-form').onsubmit = function (e) {
+            e.preventDefault();
+            let username = document.getElementById('username').value;
+            let message = document.getElementById('message').value;
+            let timestamp = new Date().toLocaleTimeString();
+
+            if (message && username) {
+                socket.send({ 'username': username, 'message': message, 'timestamp': timestamp, 'vip': isVIP });
+                document.getElementById('message').value = '';  // Réinitialiser le champ de message
+            }
+            clearTimeout(timeout);
+            timeoutFunction();
+        };
+
+        // Effacer tous les messages (seulement pour les VIP)
+        document.getElementById('clear-messages').onclick = function () {
+            if (isVIP) {
+                socket.emit('clear messages');
+            }
+        };
+
+        // Afficher le nombre d'utilisateurs connectés
+        socket.on('user count', function (data) {
+            document.getElementById('user-count').textContent = data.count;
+        });
+
+        // Réception des messages du serveur
+        socket.on('message', function (data) {
+            var messagesDiv = document.getElementById('messages');
+            var newMessage = document.createElement('div');
+            newMessage.classList.add('message-bubble');
+
+            // Ajouter VIP si nécessaire
+            var usernameDisplay = document.createElement('strong');
+            if (data.vip) {
+                usernameDisplay.innerHTML = data.username + ' <span style="color:gold;">[VIP]</span>:';
+            } else {
+                usernameDisplay.textContent = data.username + ':';
+            }
+
+            var messageContent = document.createTextNode(' ' + data.message);
+            var timeStamp = document.createElement('span');
+            timeStamp.classList.add('timestamp');
+            timeStamp.textContent = ' (' + data.timestamp + ')';
+
+            newMessage.appendChild(usernameDisplay);
+            newMessage.appendChild(messageContent);
+            newMessage.appendChild(timeStamp);
+
+            messagesDiv.appendChild(newMessage);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;  // Scroll vers le bas
+        });
+    </script>
+</body>
+
+</html>
