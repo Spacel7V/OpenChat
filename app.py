@@ -24,6 +24,11 @@ class Message(db.Model):
 with app.app_context():
     db.create_all()
 
+@app.route('/')
+def index():
+    messages = Message.query.order_by(Message.timestamp.asc()).all()
+    return render_template('chat.html', messages=messages)
+
 # Gestion des messages
 @socketio.on('message')
 def handleMessage(data):
