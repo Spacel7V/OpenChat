@@ -85,6 +85,7 @@
             document.getElementById('username').value = username + ' [VIP]';  // Afficher [VIP] dans le pseudo localement, mais côté serveur c'est déjà validé
             document.getElementById('clear-messages').style.display = 'block'; // Afficher le bouton "Effacer"
             alert('Mot de passe correct. Vous êtes maintenant VIP !');
+            isVIP = true
         });
 
         socket.on('password invalid', function () {
@@ -120,8 +121,8 @@
 
         // Effacer tous les messages (seulement pour les VIP)
         document.getElementById('clear-messages').onclick = function () {
-            if (isVIP) {
-                socket.emit('clear messages');
+            if (isVIP) {  // On vérifie toujours si l'utilisateur est bien VIP
+                socket.emit('clear messages');  // Émettre l'événement vers le serveur
             }
         };
 

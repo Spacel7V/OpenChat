@@ -59,9 +59,11 @@ def check_password(password_attempt):
 # Gestion de l'effacement des messages (VIP uniquement)
 @socketio.on('clear messages')
 def clearMessages():
-    db.session.query(Message).delete()
-    db.session.commit()
+    # Si l'utilisateur est VIP, effacer les messages
     emit('messages cleared', broadcast=True)
+    db.session.query(Message).delete()  # Supprimer tous les messages de la base de données
+    db.session.commit()
+
 
 # Comptage des utilisateurs en ligne
 connected_users = 0
