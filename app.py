@@ -49,7 +49,6 @@ def clearMessages():
     emit('messages cleared', broadcast=True)
 
 # Gestion du mot de passe VIP haché
-
 @socketio.on('check password')
 def check_password(data):
     password = data['password']
@@ -60,8 +59,7 @@ def check_password(data):
     else:
         emit('password incorrect', {'vip': False})
 
-# Compteur d'utilisateurs connectés
-
+# Compteur d'utilisateurs connectés hehe
 connected_users = 0
 
 @socketio.on('connect')
