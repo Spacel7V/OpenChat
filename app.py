@@ -35,7 +35,9 @@ def handleMessage(data):
     username = data['username']
     message = data['message']
     timestamp = data['timestamp']
-    vip_status = data['vip']
+
+    # Vérification si l'utilisateur est VIP (serveur seulement)
+    is_vip = '[VIP]' in username
 
     # Sauvegarde le message dans la base de données
     new_message = Message(username=username, message=message)
@@ -43,16 +45,16 @@ def handleMessage(data):
     db.session.commit()
 
     # Envoie le message à tous les utilisateurs
-    send({'username': username, 'message': message, 'timestamp': timestamp, 'vip': vip_status}, broadcast=True)
+    send({'username': username, 'message': message, 'timestamp': timestamp, 'vip': is_vip}, broadcast=True)
 
-# Vérification du mot de passe VIP
 @socketio.on('check password')
 def check_password(password_attempt):
     hashed_attempt = hashlib.sha256(password_attempt.encode()).hexdigest()
     if hashed_attempt == VIP_PASSWORD_HASH:
-        emit('password valid')
+        emit('password valid', broadcast=False)
     else:
-        emit('password invalid')
+        emit('password invalid', broadcast=False)
+
 
 # Gestion de l'effacement des messages (VIP uniquement)
 @socketio.on('clear messages')
@@ -68,6 +70,15 @@ connected_users = 0
 def handle_connect():
     global connected_users
     connected_users += 1
+    
+    # Récupérer les anciens messages de la base de données
+    messages = Message.query.order_by(Message.timestamp.asc()).all()
+    message_list = [{'username': msg.username, 'message': msg.message, 'timestamp': msg.timestamp.strftime('%H:%M:%S'), 'vip': '[VIP]' in msg.username} for msg in messages]
+    
+    # Envoyer les anciens messages à l'utilisateur connecté
+    emit('load previous messages', message_list)
+
+    # Diffuser le nombre d'utilisateurs connectés
     emit('update user count', connected_users, broadcast=True)
 
 @socketio.on('disconnect')
@@ -75,6 +86,7 @@ def handle_disconnect():
     global connected_users
     connected_users -= 1
     emit('update user count', connected_users, broadcast=True)
+
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

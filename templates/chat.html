@@ -80,7 +80,9 @@
 
         // Réception de la validation du mot de passe
         socket.on('password valid', function () {
-            isVIP = true;
+            // Si le mot de passe est validé, le serveur ajoute automatiquement [VIP] aux messages de l'utilisateur
+            let username = document.getElementById('username').value;
+            document.getElementById('username').value = username + ' [VIP]';  // Afficher [VIP] dans le pseudo localement, mais côté serveur c'est déjà validé
             document.getElementById('clear-messages').style.display = 'block'; // Afficher le bouton "Effacer"
             alert('Mot de passe correct. Vous êtes maintenant VIP !');
         });
@@ -142,6 +144,34 @@
         // Réception de l'événement d'arrêt de frappe
         socket.on('stop typing', function () {
             document.getElementById('typing').innerHTML = '';
+        });
+
+        socket.on('load previous messages', function (messages) {
+            var messagesDiv = document.getElementById('messages');
+            messages.forEach(function (data) {
+                var newMessage = document.createElement('div');
+                newMessage.classList.add('message-bubble');
+
+                // Ajouter VIP si nécessaire
+                var usernameDisplay = document.createElement('strong');
+                if (data.vip) {
+                    usernameDisplay.innerHTML = data.username + ' <span style="color:gold;">[VIP]</span>:';
+                } else {
+                    usernameDisplay.textContent = data.username + ':';
+                }
+
+                var messageContent = document.createTextNode(' ' + data.message);
+                var timeStamp = document.createElement('span');
+                timeStamp.classList.add('timestamp');
+                timeStamp.textContent = ' (' + data.timestamp + ')';
+
+                newMessage.appendChild(usernameDisplay);
+                newMessage.appendChild(messageContent);
+                newMessage.appendChild(timeStamp);
+
+                messagesDiv.appendChild(newMessage);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;  // Scroll vers le bas
+            });
         });
     </script>
 </body>
