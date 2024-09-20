@@ -16,7 +16,6 @@ body {
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     padding: 20px;
-    overflow-x: hidden;
 }
 
 #messages {
@@ -75,22 +74,4 @@ body {
     border-radius: 4px;
     cursor: pointer;
     display: none;
-}
-
-#admin-panel {
-    margin-bottom: 10px;
-}
-
-.timestamp {
-    font-size: 0.8em;
-    color: #555;
-    margin-left: 10px;
-}
-
-.message-bubble {
-    border: 1px solid black;
-    border-radius: 8px;
-    padding: 10px;
-    margin: 5px 0;
-    background-color: #e6e6e6;
 }

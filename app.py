@@ -10,8 +10,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chat.db'
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
-# Hash SHA-256 du mot de passe VIP ("wang140815&")
-VIP_PASSWORD_HASH = hashlib.sha256(b"wang140815&").hexdigest()
+# Mot de passe VIP haché (hashed 'wang140815&')
+VIP_PASSWORD_HASH = hashlib.sha256(b'wang140815&').hexdigest()
 
 # Modèle de base de données pour les messages
 class Message(db.Model):
@@ -45,39 +45,36 @@ def handleMessage(data):
     # Envoie le message à tous les utilisateurs
     send({'username': username, 'message': message, 'timestamp': timestamp, 'vip': vip_status}, broadcast=True)
 
+# Vérification du mot de passe VIP
+@socketio.on('check password')
+def check_password(password_attempt):
+    hashed_attempt = hashlib.sha256(password_attempt.encode()).hexdigest()
+    if hashed_attempt == VIP_PASSWORD_HASH:
+        emit('password valid')
+    else:
+        emit('password invalid')
+
 # Gestion de l'effacement des messages (VIP uniquement)
 @socketio.on('clear messages')
 def clearMessages():
-    # Supprime tous les messages dans la base de données
     db.session.query(Message).delete()
     db.session.commit()
     emit('messages cleared', broadcast=True)
 
-# Gestion du mot de passe VIP haché
-@socketio.on('check password')
-def check_password(data):
-    password = data['password']
-    hashed_password = hashlib.sha256(password.encode()).hexdigest()
-
-    if hashed_password == VIP_PASSWORD_HASH:
-        emit('password correct', {'vip': True})
-    else:
-        emit('password incorrect', {'vip': False})
-
-# Compteur d'utilisateurs connectés hehe
+# Comptage des utilisateurs en ligne
 connected_users = 0
 
 @socketio.on('connect')
-def on_connect():
+def handle_connect():
     global connected_users
     connected_users += 1
-    emit('user count', {'count': connected_users}, broadcast=True)
+    emit('update user count', connected_users, broadcast=True)
 
 @socketio.on('disconnect')
-def on_disconnect():
+def handle_disconnect():
     global connected_users
     connected_users -= 1
-    emit('user count', {'count': connected_users}, broadcast=True)
+    emit('update user count', connected_users, broadcast=True)
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
