@@ -37,7 +37,6 @@ def handleMessage(data):
     timestamp = data['timestamp']
 
     # Vérification si l'utilisateur est VIP (serveur seulement)
-    is_vip = '[VIP]' in username
 
     # Sauvegarde le message dans la base de données
     new_message = Message(username=username, message=message)
@@ -45,7 +44,7 @@ def handleMessage(data):
     db.session.commit()
 
     # Envoie le message à tous les utilisateurs
-    send({'username': username, 'message': message, 'timestamp': timestamp, 'vip': is_vip}, broadcast=True)
+    send({'username': username, 'message': message, 'timestamp': timestamp}, broadcast=True)
 
 @socketio.on('check password')
 def check_password(password_attempt):
