@@ -100,7 +100,7 @@
 
             // Ajouter VIP si nécessaire
             var usernameDisplay = document.createElement('strong');
-            if (data.vip) {
+            if (isVIP == true) {
                 usernameDisplay.innerHTML = data.username + ' <span style="color:gold;">[VIP]</span>:';
             } else {
                 usernameDisplay.textContent = data.username + ':';
